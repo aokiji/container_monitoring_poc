@@ -1,0 +1,38 @@
+version: '2'
+services:
+  collectd:
+    build:
+      context: .
+      dockerfile: collectd.Dockerfile
+    volumes:
+      - /proc:/mnt/proc:ro
+      - /:/hostfs:ro
+    environment:
+      COLLECTD_HOSTNAME: $HOSTNAME
+    privileged: true
+  influxdb:
+    build:
+      context: .
+      dockerfile: influxdb.Dockerfile
+    volumes:
+      - influxdb:/var/lib/influxdb
+    ports:
+      - "8086:8086"
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+  cadvisor:
+    image: google/cadvisor
+    command: -storage_driver=influxdb -storage_driver_db=cadvisor -storage_driver_host=influxdb:8086
+    restart: always
+    ports:
+      - "8080:8080"
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro      
+volumes:
+  influxdb:
